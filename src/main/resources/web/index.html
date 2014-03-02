@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script>
+var map;
+var BreakException= {};
+var playerMarkers = [];
+var infoWindowContent = '<div class="infowindow_content">'+
+		'<div id="siteNotice">'+
+		'</div>'+
+		'<h3 id="firstHeading" class="firstHeading">{{playerName}}</h3>'+
+		'<div id="bodyContent">'+
+		'<p>Ping: <span id="{{playerName}}_ping">{{ping}}</span>ms</p>'+
+		'<p>Currently online: <span id="{{playerName}}_online">{{online}}</span></p>'+
+		'</div>'+
+		'</div>';
+
+String.prototype.replaceAll = function( token, newToken, ignoreCase ) {
+    var _token;
+    var str = this + "";
+    var i = -1;
+
+    if ( typeof token === "string" ) {
+
+        if ( ignoreCase ) {
+
+            _token = token.toLowerCase();
+
+            while( (
+                i = str.toLowerCase().indexOf(
+                    token, i >= 0 ? i + newToken.length : 0
+                ) ) !== -1
+            ) {
+                str = str.substring( 0, i ) +
+                    newToken +
+                    str.substring( i + token.length );
+            }
+
+        } else {
+            return this.split( token ).join( newToken );
+        }
+
+    }
+
+    return str;
+};
+
+function PlayerMarker(name, ping, lat, lng) {
+	var self = this;
+
+	this.name = name;
+	this.ping = ping;
+	this.online = false;
+	this.marker = new google.maps.Marker();
+	this.infowindow = new google.maps.InfoWindow({
+		content: self.render()
+	});
+	
+	this.marker.setPosition(new google.maps.LatLng(lat, lng));
+	this.marker.setIcon("https://minotar.net/avatar/" + this.name +"/16");
+	this.marker.setMap(map);
+	
+	this.infowindow.open(map, this.marker);
+}
+
+PlayerMarker.prototype.render = function() {
+	return infoWindowContent.replaceAll("{{playerName}}", this.name).replaceAll("{{ping}}", this.ping).replaceAll("{{online}}", this.online);
+}
+
+PlayerMarker.prototype.remove = function() {
+	this.infowindow.close();
+	this.marker.setMap(null);
+}
+
+function initialize() {
+	var mapProp = {
+		center: new google.maps.LatLng(51.508742, -0.120850),
+		zoom: 5,
+		mapTypeId: google.maps.MapTypeId.ROADMAP,
+		streetViewControl: false
+	};
+	
+	map = new google.maps.Map(document.getElementById("googleMap"), mapProp);
+	
+	setInterval(function() {
+		$.ajax({
+			url: "/api/getPlayers?noRand=" + Math.random(),
+		}).done(function( data ) {
+			data.players.forEach(function(val) {
+				var found = false;			
+				try {
+					playerMarkers.forEach(function(val1) {
+						if (val.name == val1.name) {
+							found = true;
+									
+							val1.ping = val.ping;
+							val1.online = val.online;
+							$('#' + val1.name + "_online").html(val1.online);
+							$('#' + val1.name + "_ping").html(val1.ping);
+							
+							throw BreakException;
+						}
+					});
+				} catch(e) {
+					if (e !== BreakException) throw e;
+				}
+				
+				if (!found) {
+					if (val.lat !== undefined && val.lon !== undefined) {
+						playerMarkers.push(new PlayerMarker(val.name, val.ping, val.lat, val.lon));
+					}
+				}
+			});
+			
+			playerMarkers.forEach(function(val) {
+				var found = false;			
+				try {
+					data.players.forEach(function(val1) {
+						if (val.name == val1.name) {
+							found = true;
+							throw BreakException;
+						}
+					});
+				} catch(e) {
+					if (e !== BreakException) throw e;
+				}
+				
+				if (!found) {
+					val.remove();
+				
+					var i = playerMarkers.indexOf(val);
+					
+					if(i != -1) {
+						playerMarkers.splice(i, 1);
+					}
+				}
+			});
+		});
+	}, 1000);
+}
+
+$( document ).ready( function() {
+    $.ajax({
+			url: "/api/getGoogleAPIKey?noRand=" + Math.random(),
+    }).done(function( data ) {
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + data + '&sensor=false&callback=initialize';
+        document.body.appendChild(script);
+    });
+} );
+
+</script>
+
+<style type="text/css">
+        html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        }
+
+        .infowindow_content {
+        width: 150px;
+        overflow: hidden;
+        }
+
+        .infowindow_content h3 {
+        font-size: 16px;
+        line-height: 1;
+        margin: 0;
+        }
+
+        .infowindow_content p {
+        font-size: 12px;
+        line-height: 1;
+        margin: 0;
+        }
+
+        #googleMap {
+        height: 100%;
+        width: 100%;
+        }
+</style>
+
+</head>
+
+<body>
+
+<div id="googleMap"></div>
+
+</body>
+</html>
