@@ -78,10 +78,6 @@
 
     <repositories>
         <repository>
-            <id>geoip</id>
-            <url>http://snambi.github.com/maven/</url>
-        </repository>
-        <repository>
             <id>cubespace</id>
             <url>http://nexus.cube-space.net/content/groups/public/</url>
             <snapshots>
