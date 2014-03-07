@@ -168,7 +168,7 @@ function initialize() {
 			});
 			
 			$('#amt_online').text(playerMarkers.length);
-			$('#avg_ping').text(ping / playerMarkers.length);
+			$('#avg_ping').text(Math.round(ping / playerMarkers.length));
 		});
 	}, 1000);
 }
