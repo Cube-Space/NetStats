@@ -8,36 +8,25 @@ public class Player {
     private Integer ping;
     private Float lat;
     private Float lon;
-
-    public String getName() {
-        return name;
-    }
+    private Boolean online;
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Integer getPing() {
-        return ping;
     }
 
     public void setPing(Integer ping) {
         this.ping = ping;
     }
 
-    public Float getLat() {
-        return lat;
-    }
-
     public void setLat(Float lat) {
         this.lat = lat;
     }
 
-    public Float getLon() {
-        return lon;
-    }
-
     public void setLon(Float lon) {
         this.lon = lon;
+    }
+
+    public void setOnline(Boolean online) {
+        this.online = online;
     }
 }

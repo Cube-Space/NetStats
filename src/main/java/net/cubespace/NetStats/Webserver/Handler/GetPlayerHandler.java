@@ -57,6 +57,7 @@ public class GetPlayerHandler implements IHandler {
                             player.setPing(players.getPing());
                             player.setLat(players.getLat());
                             player.setLon(players.getLon());
+                            player.setOnline(players.getOnline());
 
                             sendList.add(player);
                         }
