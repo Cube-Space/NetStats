@@ -43,9 +43,10 @@ public class NetStatsPlugin extends CubespacePlugin {
             if(!indexHtml.getParentFile().exists()) {
                 indexHtml.getParentFile().mkdirs();
             }
-
-            ExtractFile.extractFile("/web/index.html", indexHtml);
         }
+
+        indexHtml.delete();
+        ExtractFile.extractFile("/web/index.html", indexHtml);
 
         //Setup Database
         database = new Database(this, config.getDatabase_URL(), config.getDatabase_User(), config.getDatabase_Password());

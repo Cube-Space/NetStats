@@ -4,7 +4,7 @@
 <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 <script>
 var map;
-var BreakException= {};
+var BreakException = {};
 var playerMarkers = [];
 var infoWindowContent = '<div class="infowindow_content">'+
 		'<div id="siteNotice">'+
@@ -16,6 +16,25 @@ var infoWindowContent = '<div class="infowindow_content">'+
 		'</div>'+
 		'</div>';
 
+var InfoWindows = {
+	visible: true,
+	toggle: function() {
+		if (InfoWindows.visible) {
+			playerMarkers.forEach(function(val) {
+				val.hideInfo();
+			});
+			
+			InfoWindows.visible = false;
+		} else {
+			playerMarkers.forEach(function(val) {
+				val.showInfo();
+			});
+			
+			InfoWindows.visible = true;
+		}
+	}
+};
+		
 String.prototype.replaceAll = function( token, newToken, ignoreCase ) {
     var _token;
     var str = this + "";
@@ -42,8 +61,7 @@ String.prototype.replaceAll = function( token, newToken, ignoreCase ) {
         }
 
     }
-
-    return str;
+return str;
 };
 
 function PlayerMarker(name, ping, lat, lng) {
@@ -73,6 +91,14 @@ PlayerMarker.prototype.remove = function() {
 	this.marker.setMap(null);
 }
 
+PlayerMarker.prototype.hideInfo = function() {
+	this.infowindow.close();
+}
+
+PlayerMarker.prototype.showInfo = function() {
+	this.infowindow.open(map, this.marker);
+}
+
 function initialize() {
 	var mapProp = {
 		center: new google.maps.LatLng(51.508742, -0.120850),
@@ -87,12 +113,16 @@ function initialize() {
 		$.ajax({
 			url: "/api/getPlayers?noRand=" + Math.random(),
 		}).done(function( data ) {
+			var ping = 0;
+		
 			data.players.forEach(function(val) {
 				var found = false;			
 				try {
 					playerMarkers.forEach(function(val1) {
 						if (val.name == val1.name) {
 							found = true;
+									
+							ping = ping + val.ping;
 									
 							val1.ping = val.ping;
 							val1.online = val.online;
@@ -136,6 +166,9 @@ function initialize() {
 					}
 				}
 			});
+			
+			$('#amt_online').text(playerMarkers.length);
+			$('#avg_ping').text(ping / playerMarkers.length);
 		});
 	}, 1000);
 }
@@ -150,38 +183,49 @@ $( document ).ready( function() {
         document.body.appendChild(script);
     });
 } );
-
 </script>
 
 <style type="text/css">
-        html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        }
+    html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    }
 
-        .infowindow_content {
-        width: 150px;
-        overflow: hidden;
-        }
+    .infowindow_content {
+    width: 150px;
+    overflow: hidden;
+    }
 
-        .infowindow_content h3 {
-        font-size: 16px;
-        line-height: 1;
-        margin: 0;
-        }
+    .infowindow_content h3 {
+    font-size: 16px;
+    line-height: 1;
+    margin: 0;
+    }
 
-        .infowindow_content p {
-        font-size: 12px;
-        line-height: 1;
-        margin: 0;
-        }
+    .infowindow_content p {
+    font-size: 12px;
+    line-height: 1;
+    margin: 0;
+    }
 
-        #googleMap {
-        height: 100%;
-        width: 100%;
-        }
+    .ping_window {
+    font-size: 14px;
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    margin-left: -180px;
+    z-index: 5;
+    background-color: #fff;
+    padding: 5px;
+    border: 1px solid #999;
+    }
+
+    #googleMap {
+    height: 100%;
+    width: 100%;
+    }
 </style>
 
 </head>
@@ -189,6 +233,8 @@ $( document ).ready( function() {
 <body>
 
 <div id="googleMap"></div>
-
+<div class="ping_window">
+    Avg. Ping: <span id="avg_ping">0</span>ms - Currently online: <span id="amt_online">0</span> - <input type="button" value="Toggle Infowindows" onclick="InfoWindows.toggle();"></input>
+</div>
 </body>
 </html>
