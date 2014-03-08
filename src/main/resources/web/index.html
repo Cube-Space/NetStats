@@ -67,6 +67,7 @@ return str;
 function PlayerMarker(name, ping, lat, lng) {
 	var self = this;
 
+    this.infoWindowShown = false;
 	this.name = name;
 	this.ping = ping;
 	this.online = false;
@@ -78,8 +79,17 @@ function PlayerMarker(name, ping, lat, lng) {
 	this.marker.setPosition(new google.maps.LatLng(lat, lng));
 	this.marker.setIcon("https://minotar.net/avatar/" + this.name +"/16");
 	this.marker.setMap(map);
-	
-	//this.infowindow.open(map, this.marker);
+
+	if (InfoWindows.visible) {
+	    this.infowindow.open(map, this.marker);
+	    this.infoWindowShown = true;
+	}
+
+	google.maps.event.addListener(this.marker, 'click', function() {
+        if (!this.infoWindowShown) {
+            this.infowindow.open(map, this.marker);
+        }
+    }.bind(this));
 }
 
 PlayerMarker.prototype.render = function() {
@@ -89,14 +99,24 @@ PlayerMarker.prototype.render = function() {
 PlayerMarker.prototype.remove = function() {
 	this.infowindow.close();
 	this.marker.setMap(null);
+	this.infoWindowShown = false;
+}
+
+PlayerMarker.prototype.show = function() {
+    this.showInfo();
+	this.marker.setMap(map);
 }
 
 PlayerMarker.prototype.hideInfo = function() {
 	this.infowindow.close();
+	this.infoWindowShown = false;
 }
 
 PlayerMarker.prototype.showInfo = function() {
-	this.infowindow.open(map, this.marker);
+	if (InfoWindows.visible) {
+        this.infowindow.open(map, this.marker);
+        this.infoWindowShown = true;
+    }
 }
 
 function initialize() {
@@ -182,6 +202,22 @@ $( document ).ready( function() {
         script.src = 'https://maps.googleapis.com/maps/api/js?key=' + data + '&sensor=false&callback=initialize';
         document.body.appendChild(script);
     });
+
+    $("#search").keyup(function (e) {
+        sval = $(this).val();
+
+        if (sval == "") {
+            playerMarkers.forEach(function(val) {
+                val.show();
+            });
+        } else {
+            playerMarkers.forEach(function(val) {
+                if (val.name.indexOf(sval) != 0) {
+                    val.remove();
+                }
+            });
+        }
+    });
 } );
 </script>
 
@@ -211,11 +247,21 @@ $( document ).ready( function() {
     }
 
     .ping_window {
-    font-size: 14px;
     position: absolute;
     top: 5px;
     left: 50%;
     margin-left: -180px;
+    }
+
+    .settings_window {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    margin-top: -10px;
+    }
+
+    .gms {
+    font-size: 14px;
     z-index: 5;
     background-color: #fff;
     padding: 5px;
@@ -233,8 +279,12 @@ $( document ).ready( function() {
 <body>
 
 <div id="googleMap"></div>
-<div class="ping_window">
-    Avg. Ping: <span id="avg_ping">0</span>ms - Currently online: <span id="amt_online">0</span> - <input type="button" value="Toggle Infowindows" onclick="InfoWindows.toggle();" />
+<div class="gms ping_window">
+    Avg. Ping: <span id="avg_ping">0</span>ms - Currently online: <span id="amt_online">0</span>
+</div>
+<div class="gms settings_window">
+    <input type="text" title="Search" value="Search for Users/Selectors" onclick="this.value = '';" id="search" /> <br />
+    <input type="checkbox" title="Toggle Infowindows" onclick="InfoWindows.toggle();" checked /> Show Infowindows
 </div>
 </body>
 </html>
