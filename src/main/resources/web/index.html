@@ -20,17 +20,17 @@ var InfoWindows = {
 	visible: true,
 	toggle: function() {
 		if (InfoWindows.visible) {
+			
+			InfoWindows.visible = false;
 			playerMarkers.forEach(function(val) {
 				val.hideInfo();
 			});
-			
-			InfoWindows.visible = false;
+
 		} else {
+			InfoWindows.visible = true;
 			playerMarkers.forEach(function(val) {
 				val.showInfo();
 			});
-			
-			InfoWindows.visible = true;
 		}
 	}
 };
@@ -205,6 +205,8 @@ $( document ).ready( function() {
 
     $("#search").keyup(function (e) {
         sval = $(this).val();
+
+        console.log(sval);
 
         if (sval == "") {
             playerMarkers.forEach(function(val) {
