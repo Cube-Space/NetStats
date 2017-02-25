@@ -1,5 +1,8 @@
 package net.cubespace.NetStats;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.dao.LruObjectCache;
@@ -17,15 +20,12 @@ import net.cubespace.NetStats.Webserver.HTTPServer;
 import net.cubespace.Yamler.Config.InvalidConfigurationException;
 import net.cubespace.lib.CubespacePlugin;
 import net.cubespace.lib.Database.Database;
-import org.jdeferred.Deferred;
-import org.jdeferred.DoneCallback;
-import org.jdeferred.FailCallback;
-import org.jdeferred.impl.DeferredObject;
 
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 /**
  * @author geNAZt (fabian.fassbender42@googlemail.com)
@@ -34,6 +34,8 @@ public class NetStatsPlugin extends CubespacePlugin {
     private PlayerManager playerManager;
 
     public void onEnable() {
+        getLogger().setLevel( Level.INFO );
+
         final NetStatsPlugin plugin = this;
         final Main config = new Main( this );
 
@@ -84,17 +86,10 @@ public class NetStatsPlugin extends CubespacePlugin {
         getProxy().getScheduler().schedule( this, new Runnable() {
             @Override
             public void run() {
-                final Deferred<Long, Throwable, Void> checkUpdateDeferred = new DeferredObject<Long, Throwable, Void>();
-                checkUpdateDeferred.fail( new FailCallback<Throwable>() {
+                final SettableFuture<Long> future = SettableFuture.create();
+                Futures.addCallback( future, new FutureCallback<Long>() {
                     @Override
-                    public void onFail( Throwable throwable ) {
-                        getLogger().severe( "Could not check for GeoIP Database Update: " + throwable.getMessage() );
-                    }
-                } );
-
-                checkUpdateDeferred.done( new DoneCallback<Long>() {
-                    @Override
-                    public void onDone( final Long aLong ) {
+                    public void onSuccess( final Long aLong ) {
                         final Main config = getConfigManager().getConfig( "main" );
 
                         if ( aLong > config.getLastGeoIPLiteTime() ) {
@@ -120,13 +115,18 @@ public class NetStatsPlugin extends CubespacePlugin {
                             } );
                         }
                     }
+
+                    @Override
+                    public void onFailure( Throwable throwable ) {
+                        getLogger().severe( "Could not check for GeoIP Database Update: " + throwable.getMessage() );
+                    }
                 } );
 
                 getProxy().getScheduler().runAsync( plugin, new Runnable() {
                     @Override
                     public void run() {
                         plugin.getLogger().info( "Checking for new GeoIP Database" );
-                        GeoIPDownloader.getLastModified( checkUpdateDeferred );
+                        GeoIPDownloader.getLastModified( future );
                     }
                 } );
             }

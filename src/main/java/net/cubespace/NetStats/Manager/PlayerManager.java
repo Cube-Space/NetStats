@@ -1,5 +1,8 @@
 package net.cubespace.NetStats.Manager;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.Where;
 import com.maxmind.geoip.Location;
@@ -8,10 +11,6 @@ import net.cubespace.NetStats.Lookup.GeoIPDownloader;
 import net.cubespace.NetStats.Lookup.Lookup;
 import net.cubespace.NetStats.NetStatsPlugin;
 import net.cubespace.NetStats.Util.FeatureDetector;
-import org.jdeferred.Deferred;
-import org.jdeferred.DoneCallback;
-import org.jdeferred.FailCallback;
-import org.jdeferred.impl.DeferredObject;
 
 import java.net.InetAddress;
 import java.sql.SQLException;
@@ -32,7 +31,7 @@ public class PlayerManager {
     }
 
     public void onQuit( final String name, final UUID uuid ) {
-        final Deferred<Player, Exception, Void> def = new DeferredObject<>();
+        final SettableFuture<Player> future = SettableFuture.create();
         plugin.getProxy().getScheduler().runAsync( plugin, new Runnable() {
             public void run() {
                 try {
@@ -49,30 +48,32 @@ public class PlayerManager {
                     if ( player != null ) {
                         player.setOnline( false );
                         playerDao.update( player );
-                        def.resolve( player );
+
+                        future.set( player );
                     } else {
-                        def.reject( new Exception( "Player not found" ) );
+                        future.setException( new Exception( "Player not found" ) );
                     }
                 } catch ( SQLException ex ) {
-                    def.reject( ex );
+                    future.setException( ex );
                 }
-
             }
         } );
 
-        def.done( new DoneCallback<Player>() {
-            public void onDone( final Player result ) {
+        Futures.addCallback( future, new FutureCallback<Player>() {
+            @Override
+            public void onSuccess( Player player ) {
                 plugin.getLogger().info( "Player " + name + " is now offline" );
             }
-        } ).fail( new FailCallback<Exception>() {
-            public void onFail( Exception e ) {
-                plugin.getLogger().severe( "Error in updating Player entry: " + e.getMessage() );
+
+            @Override
+            public void onFailure( Throwable throwable ) {
+                plugin.getLogger().severe( "Error in updating Player entry: " + throwable.getMessage() );
             }
         } );
     }
 
     public void onJoin( final String name, final UUID uuid, final String ip, final int ping, final InetAddress address ) {
-        final Deferred<Player, Exception, Void> def = new DeferredObject<>();
+        final SettableFuture<Player> future = SettableFuture.create();
         plugin.getProxy().getScheduler().runAsync( plugin, new Runnable() {
             public void run() {
                 try {
@@ -100,7 +101,7 @@ public class PlayerManager {
 
                         playerDao.create( newPlayer );
 
-                        def.resolve( newPlayer );
+                        future.set( newPlayer );
                     } else {
                         player.setIp( ip );
                         player.setOnline( true );
@@ -108,17 +109,18 @@ public class PlayerManager {
                         player.setLastOnline( System.currentTimeMillis() );
                         playerDao.update( player );
 
-                        def.resolve( player );
+                        future.set( player );
                     }
                 } catch ( SQLException ex ) {
-                    def.reject( ex );
+                    future.setException( ex );
                 }
             }
         } );
 
-        def.done( new DoneCallback<Player>() {
-            public void onDone( final Player result ) {
-                plugin.getLogger().info( "Found User " + name + ". He/She has the ID: " + result.getId() );
+        Futures.addCallback( future, new FutureCallback<Player>() {
+            @Override
+            public void onSuccess( final Player player ) {
+                plugin.getLogger().info( "Found User " + name + ". He/She has the ID: " + player.getId() );
 
                 if ( GeoIPDownloader.currentlyUpdating() ) return;
 
@@ -127,11 +129,11 @@ public class PlayerManager {
                     public void run() {
                         Location location = lookup.lookup( address );
                         if ( location != null ) {
-                            result.setLat( location.latitude );
-                            result.setLon( location.longitude );
+                            player.setLat( location.latitude );
+                            player.setLon( location.longitude );
 
                             try {
-                                plugin.getDatabase().getDAO( Player.class ).update( result );
+                                plugin.getDatabase().getDAO( Player.class ).update( player );
                             } catch ( SQLException e ) {
                                 plugin.getLogger().warning( "Could not update Location for Player: " + e.getMessage() );
                             }
@@ -142,15 +144,16 @@ public class PlayerManager {
                     }
                 } );
             }
-        } ).fail( new FailCallback<Exception>() {
-            public void onFail( Exception e ) {
-                plugin.getLogger().severe( "Error in creating a new Player entry: " + e.getMessage() );
+
+            @Override
+            public void onFailure( Throwable throwable ) {
+                plugin.getLogger().severe( "Error in creating a new Player entry: " + throwable.getMessage() );
             }
         } );
     }
 
     public void updatePing( final String name, final UUID uuid, final int ping ) {
-        final Deferred<Player, Exception, Void> def = new DeferredObject<>();
+        final SettableFuture<Player> future = SettableFuture.create();
 
         plugin.getProxy().getScheduler().runAsync( plugin, new Runnable() {
             public void run() {
@@ -168,22 +171,26 @@ public class PlayerManager {
                     if ( player1 != null ) {
                         player1.setPing( ping );
                         playerDao.update( player1 );
+
+                        future.set( player1 );
+                    } else {
+                        future.setException( new Exception( "Player not found" ) );
                     }
                 } catch ( Exception e ) {
-                    def.reject( e );
+                    future.setException( e );
                 }
             }
         } );
 
-        def.done( new DoneCallback<Player>() {
+        Futures.addCallback( future, new FutureCallback<Player>() {
             @Override
-            public void onDone( Player player ) {
+            public void onSuccess( Player player ) {
                 plugin.getLogger().fine( "Updated ping for " + player.getName() + " to " + player.getPing() );
             }
-        } ).fail( new FailCallback<Exception>() {
+
             @Override
-            public void onFail( Exception e ) {
-                plugin.getLogger().warning( "Could not update ping for " + name + ": " + e.getMessage() );
+            public void onFailure( Throwable throwable ) {
+                plugin.getLogger().warning( "Could not update ping for " + name + ": " + throwable.getMessage() );
             }
         } );
     }

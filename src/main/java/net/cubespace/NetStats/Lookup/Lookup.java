@@ -19,29 +19,30 @@ public class Lookup implements IManager {
     private ScheduledTask task;
     private LookupService lookupService;
 
-    public Lookup(final CubespacePlugin plugin) {
-        task = plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+    public Lookup( final CubespacePlugin plugin ) {
+        task = plugin.getProxy().getScheduler().schedule( plugin, new Runnable() {
             @Override
             public void run() {
                 try {
-                    lookupService = new LookupService(new File(plugin.getDataFolder(), ((Main) plugin.getConfigManager().getConfig("main")).getGeoIPLiteCityDatabase()),
+                    lookupService = new LookupService( new File( plugin.getDataFolder(), ( (Main) plugin.getConfigManager().getConfig( "main" ) ).getGeoIPLiteCityDatabase() ),
                             LookupService.GEOIP_MEMORY_CACHE | LookupService.GEOIP_CHECK_CACHE );
 
                     task.cancel();
 
-                    plugin.getLogger().info("GeoIP lookup did setup. Everything is good :)");
-                } catch (IOException e) {
-                    plugin.getLogger().warning("Could not init GeoIP lookup. Retry in one second");
+                    plugin.getLogger().info( "GeoIP lookup did setup. Everything is good :)" );
+                } catch ( IOException e ) {
+                    plugin.getLogger().warning( "Could not init GeoIP lookup. Retry in one second: " + e.getMessage() );
+                    e.printStackTrace();
                 }
             }
-        }, 1, 1, TimeUnit.SECONDS);
+        }, 1, 1, TimeUnit.SECONDS );
     }
 
-    public Location lookup(InetAddress ip) {
-        if (lookupService == null) {
+    public Location lookup( InetAddress ip ) {
+        if ( lookupService == null ) {
             return null;
         }
 
-        return lookupService.getLocation(ip);
+        return lookupService.getLocation( ip );
     }
 }
