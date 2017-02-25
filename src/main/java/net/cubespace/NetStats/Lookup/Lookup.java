@@ -29,9 +29,9 @@ public class Lookup implements IManager {
 
                     task.cancel();
 
-                    plugin.getPluginLogger().info("GeoIP lookup did setup. Everything is good :)");
+                    plugin.getLogger().info("GeoIP lookup did setup. Everything is good :)");
                 } catch (IOException e) {
-                    plugin.getPluginLogger().warn("Could not init GeoIP lookup. Retry in one second");
+                    plugin.getLogger().warning("Could not init GeoIP lookup. Retry in one second");
                 }
             }
         }, 1, 1, TimeUnit.SECONDS);

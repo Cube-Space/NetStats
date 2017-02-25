@@ -10,7 +10,7 @@ public class FeatureDetector {
 
     static {
         try {
-            ProxiedPlayer.class.getMethod("getUUID");
+            ProxiedPlayer.class.getMethod("getUniqueId");
             useUUID = true;
         } catch (NoSuchMethodException e) {
             useUUID = false;

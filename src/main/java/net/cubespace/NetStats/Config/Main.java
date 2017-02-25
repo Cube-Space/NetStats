@@ -12,19 +12,19 @@ public class Main extends Config {
     public Main(CubespacePlugin plugin) {
         CONFIG_FILE = new File(plugin.getDataFolder(), "main.yml");
 
-        Webserver_WebDir = plugin.getDataFolder() + File.separator + "web" + File.separator;
+        WebserverWebDir = plugin.getDataFolder() + File.separator + "web" + File.separator;
     }
 
     private String GeoIPLiteCityDatabase = "GeoLiteCity.dat";
     private Long LastGeoIPLiteTime = 0L;
     private String GoogleMapsAPIKey = "";
-    private String Webserver_IP = "0.0.0.0";
-    private Integer Webserver_Port = 8083;
-    private Integer Webserver_Threads = 4;
-    private String Webserver_WebDir;
-    private String Database_URL = "jdbc:h2:{DIR}netstats";
-    private String Database_User = "netstats";
-    private String Database_Password = "netstats";
+    private String WebserverIP = "0.0.0.0";
+    private Integer WebserverPort = 8083;
+    private Integer WebserverThreads = 4;
+    private String WebserverWebDir;
+    private String DatabaseURL = "jdbc:h2:{DIR}netstats";
+    private String DatabaseUser = "netstats";
+    private String DatabasePassword = "netstats";
 
     public String getGeoIPLiteCityDatabase() {
         return GeoIPLiteCityDatabase;
@@ -43,27 +43,27 @@ public class Main extends Config {
     }
 
     public String getWebserver_IP() {
-        return Webserver_IP;
+        return WebserverIP;
     }
 
     public Integer getWebserver_Port() {
-        return Webserver_Port;
+        return WebserverPort;
     }
 
     public String getWebserver_WebDir() {
-        return Webserver_WebDir;
+        return WebserverWebDir;
     }
 
     public String getDatabase_URL() {
-        return Database_URL;
+        return DatabaseURL;
     }
 
     public String getDatabase_User() {
-        return Database_User;
+        return DatabaseUser;
     }
 
     public String getDatabase_Password() {
-        return Database_Password;
+        return DatabasePassword;
     }
 
     public String getGoogleMapsAPIKey() {
@@ -71,6 +71,6 @@ public class Main extends Config {
     }
 
     public Integer getWebserver_Threads() {
-        return Webserver_Threads;
+        return WebserverThreads;
     }
 }

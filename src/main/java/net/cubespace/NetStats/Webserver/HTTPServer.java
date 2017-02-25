@@ -31,9 +31,9 @@ public class HTTPServer implements Runnable {
                     .childHandler(new HTTPServerInitializer(plugin));
 
             b.bind(config.getWebserver_IP(), config.getWebserver_Port()).sync().channel().closeFuture().sync();
-            plugin.getPluginLogger().info("Bound to " + config.getWebserver_IP() + ":" + config.getWebserver_Port());
+            plugin.getLogger().info("Bound to " + config.getWebserver_IP() + ":" + config.getWebserver_Port());
         } catch (InterruptedException e) {
-            plugin.getPluginLogger().error("Could not bind to that IP", e);
+            plugin.getLogger().severe("Could not bind to that IP: " + e.getMessage());
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();

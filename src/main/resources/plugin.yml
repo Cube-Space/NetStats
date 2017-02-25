@@ -3,3 +3,4 @@ main : net.cubespace.NetStats.NetStatsPlugin
 version: ${version}
 author: geNAZt
 depends: [BungeeLib]
+softDepends: [RedisBungee]
